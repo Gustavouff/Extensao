@@ -341,7 +341,7 @@ write.csv(SINASC_MA, "SINASC_MA.csv", row.names = FALSE)
 
 
 # Ao terminar a ETAPA 1 commite e envie para o repositório REMOTO com o comentário "Dados da UF e Script Etapa 1"
-
+# Fim da Etapa 1
 
 
 ##################################
