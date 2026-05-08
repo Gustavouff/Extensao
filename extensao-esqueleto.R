@@ -479,15 +479,48 @@ write.csv(dados_sim_2, "dados_sim_2.csv", row.names = FALSE)
 # Tarefa 4. Verificar em dados_sim_2 a frequência das categorias das seguintes variáveis: TIPOBITO, SEXO, RACACOR,
 # TPMORTEOCO, OBITOGRAV, OBITOPUERP, CAUSABAS, TPOBITOCOR, MORTEPARTO
 
+table(dados_sim_2$TIPOBITO, useNA = "ifany")
+table(dados_sim_2$SEXO, useNA = "ifany")
+table(dados_sim_2$RACACOR, useNA = "ifany")
+table(dados_sim_2$TPMORTEOCO, useNA = "ifany")
+table(dados_sim_2$OBITOGRAV, useNA = "ifany")
+table(dados_sim_2$OBITOPUERP, useNA = "ifany")
+table(dados_sim_2$CAUSABAS, useNA = "ifany")
+table(dados_sim_2$TPOBITOCOR, useNA = "ifany")
+table(dados_sim_2$MORTEPARTO, useNA = "ifany")
 
 # Tarefa 5. Atribuir para cada variável de dados_sim_2 como sendo NA a categoria de "Não informado ou Ignorado", 
 # geralmente com código 9
 # veja o dicionário do SIM para identificar qual o código das categorias de cada variável
 # Em variáveis quantitativas como IDADE verificar se existem valores como 9999 para NA
 
+dados_sim_2$TIPOBITO[dados_sim_2$TIPOBITO == 9] <- NA
+dados_sim_2$SEXO[dados_sim_2$SEXO == 9] <- NA
+dados_sim_2$RACACOR[dados_sim_2$RACACOR == 9] <- NA
+dados_sim_2$TPMORTEOCO[dados_sim_2$TPMORTEOCO == 9] <- NA
+dados_sim_2$OBITOGRAV[dados_sim_2$OBITOGRAV == 9] <- NA
+dados_sim_2$OBITOPUERP[dados_sim_2$OBITOPUERP == 9] <- NA
+dados_sim_2$TPOBITOCOR[dados_sim_2$TPOBITOCOR == 9] <- NA
+dados_sim_2$MORTEPARTO[dados_sim_2$MORTEPARTO == 9] <- NA
+dados_sim_2$IDADE[dados_sim_2$IDADE >= 999] <- NA
 
 # Tarefa 6. Atribuir legendas para as categorias das variáveis qualitativas investigadas na tarefa 4.
 # Exemplo: dados_sim_2$TIPOBITO = factor(dados_sim_2$TIPOBITO, levels = c(1,2), labels = c("Fetal", "Não fetal")
+
+# TIPOBITO (1: Fetal, 2: Não fetal)
+dados_sim_2$TIPOBITO <- factor(dados_sim_2$TIPOBITO, levels = c(1, 2), labels = c("Fetal", "Não fetal"))
+# SEXO (1: Masculino, 2: Feminino)
+dados_sim_2$SEXO <- factor(dados_sim_2$SEXO, levels = c(1, 2), labels = c("Masculino", "Feminino"))
+# RACACOR (1: Branca, 2: Preta, 3: Amarela, 4: Parda, 5: Indígena)
+dados_sim_2$RACACOR <- factor(dados_sim_2$RACACOR, levels = c(1, 2, 3, 4, 5), labels = c("Branca", "Preta", "Amarela", "Parda", "Indígena"))
+# TPMORTEOCO (Local de ocorrência)
+dados_sim_2$TPMORTEOCO <- factor(dados_sim_2$TPMORTEOCO, levels = c(1, 2, 3, 4, 5), labels = c("Hospital", "Outro estabelecimento saúde", "Domicílio", "Via pública", "Outros"))
+# OBITOGRAV, OBITOPUERP e TPOBITOCOR (1: Sim, 2: Não)
+dados_sim_2$OBITOGRAV <- factor(dados_sim_2$OBITOGRAV, levels = c(1, 2), labels = c("Sim", "Não"))
+dados_sim_2$OBITOPUERP <- factor(dados_sim_2$OBITOPUERP, levels = c(1, 2), labels = c("Sim", "Não"))
+dados_sim_2$TPOBITOCOR <- factor(dados_sim_2$TPOBITOCOR, levels = c(1, 2), labels = c("Sim", "Não"))
+# MORTEPARTO (1: Antes, 2: Durante, 3: Depois)
+dados_sim_2$MORTEPARTO <- factor(dados_sim_2$MORTEPARTO, levels = c(1, 2, 3), labels = c("Antes", "Durante", "Depois"))
 
 # ATENçÃO: 1. Na hora de escrever os labels, somente a primeira letra da palavra é maiúscula. Exemplo para SEXO: Feminino e Masculino
 #          2. Nesta Tarefa 6 não crie novas variáveis no banco de dados
@@ -500,9 +533,78 @@ write.csv(dados_sim_2, "dados_sim_2.csv", row.names = FALSE)
 # 3. Para informações neonatais utilize TIPOBITO não fetal e IDADE entre 0 e 27 dias e RACACOR
 # 4. Para informações maternas utilize TPMORTEOCO, ESC e IDADE
 
+library(dplyr)
+dados_sim_2 <- dados_sim_2 %>%
+  mutate(
+    letra_causa = substr(as.character(CAUSABAS), 1, 1),
+    # Idade em dias para óbitos neonatais (0-27 dias) [cite: 2, 14]
+    idade_dias = case_when(
+      substr(IDADE, 1, 1) %in% c("1", "2") ~ 0,
+      substr(IDADE, 1, 1) == "3" ~ as.numeric(substr(IDADE, 2, 3)),
+      TRUE ~ 999
+    ),
+    # Idade em anos para óbitos gerais e idade fértil [cite: 2, 14]
+    idade_anos = case_when(
+      substr(IDADE, 1, 1) == "4" ~ 0,
+      substr(IDADE, 1, 1) == "5" ~ as.numeric(substr(IDADE, 2, 3)),
+      TRUE ~ 0
+    )
+  )
+
+# 2. Criando o banco SIM_MA com as 41 variáveis [cite: 2]
+SIM_MA <- dados_sim_2 %>%
+  group_by(CODMUNRES) %>%
+  summarise(
+    ANO = 2015,
+    NIVEL = "MUNICIPIO",
+    
+    # Informações Gerais [cite: 2]
+    TO = n(),
+    TORC = sum(complete.cases(.), na.rm = TRUE),
+    TORCR = sum(complete.cases(across(c(TIPOBITO, SEXO, RACACOR, IDADE))), na.rm = TRUE),
+    TO_NN = sum(letra_causa %in% c("V", "W", "X", "Y"), na.rm = TRUE),
+    TO_N  = sum(!letra_causa %in% c("V", "W", "X", "Y"), na.rm = TRUE),
+    TO_CBI = sum(letra_causa %in% c("A", "B"), na.rm = TRUE),
+    TO_CB_N = sum(letra_causa %in% c("C", "D"), na.rm = TRUE),
+    TO_CB_C = sum(letra_causa == "I", na.rm = TRUE),
+    TO_CB_R = sum(letra_causa == "J", na.rm = TRUE),
+    TO_CB_O = sum(!letra_causa %in% c("A","B","C","D","I","J","V","W","X","Y"), na.rm = TRUE),
+    TO_M = sum(SEXO == "Masculino", na.rm = TRUE),
+    TO_F = sum(SEXO == "Feminino", na.rm = TRUE),
+    TO_F_IF = sum(SEXO == "Feminino" & idade_anos >= 15 & idade_anos <= 49, na.rm = TRUE),
+    
+    # Fetais e Neonatais [cite: 2, 9]
+    TO_FT = sum(TIPOBITO == "Fetal", na.rm = TRUE),
+    TO_NT = sum(TIPOBITO == "Não fetal" & idade_dias <= 27, na.rm = TRUE),
+    TO_NT_P = sum(TIPOBITO == "Não fetal" & idade_dias <= 6, na.rm = TRUE),
+    TO_NT_T = sum(TIPOBITO == "Não fetal" & idade_dias >= 7 & idade_dias <= 27, na.rm = TRUE),
+    TO_PNT = sum(idade_dias >= 28 & idade_anos < 1, na.rm = TRUE),
+    TO_MT_G = sum(OBITOGRAV == "Sim", na.rm = TRUE),
+    TONT_B  = sum(TIPOBITO == "Não fetal" & idade_dias <= 27 & RACACOR == "Branca", na.rm = TRUE),
+    TONT_PT = sum(TIPOBITO == "Não fetal" & idade_dias <= 27 & RACACOR == "Preta", na.rm = TRUE),
+    TONT_A  = sum(TIPOBITO == "Não fetal" & idade_dias <= 27 & RACACOR == "Amarela", na.rm = TRUE),
+    TONT_PD = sum(TIPOBITO == "Não fetal" & idade_dias <= 27 & RACACOR == "Parda", na.rm = TRUE),
+    TONT_I  = sum(TIPOBITO == "Não fetal" & idade_dias <= 27 & RACACOR == "Indígena", na.rm = TRUE),
+    
+    # Informações Maternas [cite: 2, 33, 38]
+    TO_MT = sum(OBITOGRAV == "Sim" | OBITOPUERP == "Sim", na.rm = TRUE),
+    TO_MT_DG = sum(OBITOGRAV == "Sim", na.rm = TRUE),
+    TO_MT_PT = sum(MORTEPARTO == "Durante", na.rm = TRUE),
+    TO_MT_AB = sum(letra_causa == "O" & (as.numeric(substr(CAUSABAS, 2, 4)) %in% 3:7), na.rm = TRUE),
+    TO_MT_42 = sum(OBITOPUERP == "Sim", na.rm = TRUE),
+    TO_MT_43 = sum(TPOBITOCOR == "Sim", na.rm = TRUE),
+    TO_MT_P = sum(OBITOGRAV == "Sim" | OBITOPUERP == "Sim", na.rm = TRUE),
+    TO_MT_P_I = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & idade_anos >= 15 & idade_anos <= 49, na.rm = TRUE),
+    TO_MT_P_ES = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 0, na.rm = TRUE),
+    TO_MT_P_EFI = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 1, na.rm = TRUE),
+    TO_MT_P_EFII = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 2, na.rm = TRUE),
+    TO_MT_P_EM = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 3, na.rm = TRUE),
+    TO_MT_P_ESI = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 4, na.rm = TRUE),
+    TO_MT_P_ESC = sum((OBITOGRAV == "Sim" | OBITOPUERP == "Sim") & ESC2010 == 5, na.rm = TRUE)
+  )
 
 # Tarefa 8: Exporte o banco de dados com o nome SIM_UF.csv
-
+write.csv(SIM_MA, "SIM_MA.csv", row.names = FALSE)
 # Ao terminar a ETAPA 2 commite e envie para o repositório REMOTO com o comentário "Dados da UF e Script Etapa 2"
 # Faça um merge de script de SIM para main
 
