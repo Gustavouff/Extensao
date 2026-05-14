@@ -639,7 +639,52 @@ write.csv(SIM_MA, "SIM_MA.csv", row.names = FALSE)
 # Exporte o arquivo em formato CSV
 # Faça o commit com a mensagem "Script e dados TAREFA 3 - SIDRA"
 
+library(dplyr)
 
+# 1. Lendo os arquivos exatos da pasta
+pop_est_2015 <- read.csv("população residente estimada - UF e municípios - 2015 - SIDRA - tabela_6579 (1).csv", sep = ";")
+pop_censo_sexo <- read.csv("população residente censo 2010 - UF e municípios - total e por sexo - SIDRA - tabela_1552.csv", sep = ";")
+pop_censo_idade <- read.csv("população residente censo 2010 - por faixa etária e sexo -  municípios - SIDRA - tabela_1552.csv", sep = ";")
+
+# 2. Agrupando as faixas etárias por município e somando
+idade_agrupada <- pop_censo_idade %>%
+  mutate(
+    faixa = case_when(
+      F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos") ~ "<15",
+      F_IDADE %in% c("15 a 19 anos", "20 a 24 anos", "25 a 29 anos", 
+                     "30 a 34 anos", "35 a 39 anos", "40 a 44 anos", "45 a 49 anos") ~ "15_49",
+      TRUE ~ "50+"
+    )
+  ) %>%
+  group_by(CODMUNRES) %>%
+  summarise(
+    POPRC_15 = sum(POP[faixa == "<15"], na.rm = TRUE),
+    POPRC_15_49 = sum(POP[faixa == "15_49"], na.rm = TRUE),
+    POPRC_50 = sum(POP[faixa == "50+"], na.rm = TRUE),
+    POPRC_F_15 = sum(POPF[faixa == "<15"], na.rm = TRUE),
+    POPRC_F_15_49 = sum(POPF[faixa == "15_49"], na.rm = TRUE),
+    POPRC_F_50 = sum(POPF[faixa == "50+"], na.rm = TRUE)
+  )
+
+# 3. Construindo o banco de dados SIDRA_UF (com as 13 variáveis)
+SIDRA_UF <- pop_est_2015 %>%
+  select(CODMUNRES, POPRE_T) %>%
+  left_join(
+    pop_censo_sexo %>% select(CODMUNRES, POPRC_T, POPRC_M, POPRC_F),
+    by = "CODMUNRES"
+  ) %>%
+  left_join(idade_agrupada, by = "CODMUNRES") %>%
+  mutate(
+    ANO = 2015,
+    NIVEL = ifelse(nchar(as.character(CODMUNRES)) == 2, "UF", "MUNICIPIO")
+  ) %>%
+  # Ordenando conforme a exigência
+  select(ANO, NIVEL, CODMUNRES, POPRE_T, POPRC_T, POPRC_M, POPRC_F, 
+         POPRC_15, POPRC_15_49, POPRC_50, POPRC_F_15, POPRC_F_15_49, POPRC_F_50) %>%
+  filter(!is.na(CODMUNRES))
+
+# 4. Exportar o arquivo
+write.csv(SIDRA_UF, "SIDRA_MA.csv", row.names = FALSE)
 
 
 #####################################################################################################
