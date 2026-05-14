@@ -641,13 +641,22 @@ write.csv(SIM_MA, "SIM_MA.csv", row.names = FALSE)
 
 library(dplyr)
 
-# 1. Lendo os arquivos exatos da pasta
-pop_est_2015 <- read.csv("população residente estimada - UF e municípios - 2015 - SIDRA - tabela_6579 (1).csv", sep = ";")
+# 1. Leitura dos 4 arquivos
+pop_est_2015 <- read.csv("população residente estimada - UF e municípios - 2015 - SIDRA - tabela_6579.csv", sep = ";")
 pop_censo_sexo <- read.csv("população residente censo 2010 - UF e municípios - total e por sexo - SIDRA - tabela_1552.csv", sep = ";")
-pop_censo_idade <- read.csv("população residente censo 2010 - por faixa etária e sexo -  municípios - SIDRA - tabela_1552.csv", sep = ";")
 
-# 2. Agrupando as faixas etárias por município e somando
-idade_agrupada <- pop_censo_idade %>%
+# Lendo as tabelas de faixa etária (Estado e Municípios separados)
+pop_censo_idade_uf <- read.csv("população residente censo 2010 - por faixa etária -  UF - SIDRA - tabela_1552.csv", sep = ";")
+pop_censo_idade_mun <- read.csv("população residente censo 2010 - por faixa etária e sexo -  municípios - SIDRA - tabela_1552.csv", sep = ";")
+
+# 2. Unindo os dados de idade do Estado com os dos Municípios
+pop_censo_idade_total <- bind_rows(
+  pop_censo_idade_uf %>% select(CODMUNRES, F_IDADE, POP, POPF),
+  pop_censo_idade_mun %>% select(CODMUNRES, F_IDADE, POP, POPF)
+)
+
+# 3. Agrupando as faixas etárias e somando
+idade_agrupada <- pop_censo_idade_total %>%
   mutate(
     faixa = case_when(
       F_IDADE %in% c("0 a 4 anos", "5 a 9 anos", "10 a 14 anos") ~ "<15",
@@ -666,7 +675,7 @@ idade_agrupada <- pop_censo_idade %>%
     POPRC_F_50 = sum(POPF[faixa == "50+"], na.rm = TRUE)
   )
 
-# 3. Construindo o banco de dados SIDRA_UF (com as 13 variáveis)
+# 4. Construindo o banco de dados SIDRA_UF (com as 13 variáveis)
 SIDRA_UF <- pop_est_2015 %>%
   select(CODMUNRES, POPRE_T) %>%
   left_join(
@@ -678,12 +687,11 @@ SIDRA_UF <- pop_est_2015 %>%
     ANO = 2015,
     NIVEL = ifelse(nchar(as.character(CODMUNRES)) == 2, "UF", "MUNICIPIO")
   ) %>%
-  # Ordenando conforme a exigência
   select(ANO, NIVEL, CODMUNRES, POPRE_T, POPRC_T, POPRC_M, POPRC_F, 
          POPRC_15, POPRC_15_49, POPRC_50, POPRC_F_15, POPRC_F_15_49, POPRC_F_50) %>%
   filter(!is.na(CODMUNRES))
 
-# 4. Exportar o arquivo
+# 5. Exportar o arquivo
 write.csv(SIDRA_UF, "SIDRA_MA.csv", row.names = FALSE)
 
 
