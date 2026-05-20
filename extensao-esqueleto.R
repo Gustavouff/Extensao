@@ -696,13 +696,66 @@ write.csv(SIDRA_UF, "SIDRA_MA.csv", row.names = FALSE)
 
 
 #####################################################################################################
-# ETAPA 4: GERAR BANCO DE DADOS FINAL DO ESTADO, BASEADO NAS ANÁLISES DE SINASC, SIM, IBGE, SNIS,...
-######################################################################################################
+# ETAPA 4: OUTROS BANCOS DE DADOS: IBGE, SNIS, ...
+#####################################################
 # Só inicie esta Etapa quando a professora orientar
-# ESTANDO NA BRANCH SINASC, NÃO ALTERE NADA NO SCRIPT REFERENTE A ETAPA 4
+# Abra um branch OUTROS
+# Na branch OUTROS escreva os comandos das Tarefa 1 a 3  abaixo
 
-# Cada aluno gerar um dataframe de uma única linha (referente ao seu estado) com as variáveis na ordem indicada pela professora
+# Tarefa 1. Acesso aos bancos de dados do SIDRA e obtenção da informação
+# Leia os arquivos:
+# 1. população residente estimada - UF e municípios - 2015 - SIDRA - tabela_6579.csv  
+# 2. população residente censo 2010 - UF e municípios - total e por sexo - SIDRA - tabela_1552.csv  
+# 3. população residente censo 2010 - por faixa etária -  UF - SIDRA - tabela_1552.csv
+# 4. população residente censo 2010 - por faixa etária e sexo -  municípios - SIDRA - tabela_1552.csv
 
+# A partir dos arquivos acima gere o banco de dados de nome SIDRA_UF com as seguintes variáveis:
+# 1  ANO    
+# 2  NIVEL
+# 3  CODMUNRES
+# 4 POPRE_T
+# 5 POPRC_T
+# 6 POPRC_M
+# 7 POPRC_F
+# 8 POPRC_15
+# 9 POPRC_15_49
+# 10 POPRC_50
+# 11 POPRC_F_15
+# 12 POPRC_F_15_49
+# 13 POPRC_F_50
+
+# Exporte o arquivo em formato CSV
+# Faça o commit com a mensagem "Script e dados TAREFA 3 - SIDRA"
+
+# Tarefa 2: Acesso aos bancos de dados do SINISA e obtenção da informação
+# Escreva os comandos da Tarefa 2 estando na branch OUTROS# Leia o arquivo agua e esgoto - município - 2015.csv 
+# A partir do arquivo acima gere o banco de dados de nome SINISA_UF com as seguintes variáveis:
+# 1  ANO    
+# 2  NIVEL
+# 3  CODMUNRES
+# 4 POPR_RA
+# 5 POPR_RE
+
+# Exporte o arquivo em formato CSV
+# Faça o commit com a mensagem "Script e dados TAREFA 3 - SINISA"
+
+
+# Tarefa 3: Acesso aos bancos de dados do ATLAS  e obtenção da informação
+# Escreva os comandos da Tarefa 3 estando na branch OUTROS
+# Leia os arquivos:
+# 1. códigos dos municípios - 2010.csv      
+# 2. IDHM - 2010 (CENSO) e 2015 (PNAD) - total e por sexo - UF - Atlas Brasil.csv
+# 3. IDHM - 2010 - municípios - Atlas Brasil.csv
+# A partir do arquivo acima gere o banco de dados de nome ATLAS_UF com as seguintes variáveis:
+# 1  ANO    
+# 2  NIVEL
+# 3  CODMUNRES
+# 4 IDHM_A
+# 5 IDHM_CA
+# 6 IDHM_CA_M
+# 7 IDHM_CA_F
+
+# Exporte o arquivo em formato CSV# Faça o commit com a mensagem "Script e dados TAREFA 3 - ATLAS"
 
 
 ############################################################################################
