@@ -736,6 +736,53 @@ write.csv(SINISA_MA, "SINISA_MA.csv", row.names = FALSE)
 
 # Exporte o arquivo em formato CSV# Faça o commit com a mensagem "Script e dados TAREFA 3 - ATLAS"
 
+# 1. Leitura dos arquivos do ATLAS
+cod_mun <- read.csv("códigos dos municípios - 2010.csv", sep = ";", stringsAsFactors = FALSE)
+atlas_uf <- read.csv("IDHM - 2010 (CENSO) e 2015 (PNAD) - total e por sexo - UF - Atlas Brasil.csv", sep = ";", dec = ",", stringsAsFactors = FALSE)
+atlas_mun <- read.csv("IDHM - 2010 - municípios - Atlas Brasil.csv", sep = ";", dec = ",", stringsAsFactors = FALSE)
+
+# 2. Dicionário auxiliar de UFs para Código de 2 dígitos
+uf_codigos <- data.frame(
+  UF = c("Rondônia", "Acre", "Amazonas", "Roraima", "Pará", "Amapá", "Tocantins", "Maranhão", "Piauí", "Ceará", "Rio Grande do Norte", "Paraíba", "Pernambuco", "Alagoas", "Sergipe", "Bahia", "Minas Gerais", "Espírito Santo", "Rio de Janeiro", "São Paulo", "Paraná", "Santa Catarina", "Rio Grande do Sul", "Mato Grosso do Sul", "Mato Grosso", "Goiás", "Distrito Federal"),
+  CODMUNRES = c(11, 12, 13, 14, 15, 16, 17, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31, 32, 33, 35, 41, 42, 43, 50, 51, 52, 53)
+)
+
+# 3. Tratando os dados das UFs
+atlas_uf_clean <- atlas_uf %>%
+  left_join(uf_codigos, by = "UF") %>%
+  mutate(
+    ANO = 2015,
+    NIVEL = "UF",
+    IDHM_A = as.numeric(IDHM_2015),
+    IDHM_CA = as.numeric(IDHM_2010),
+    IDHM_CA_M = as.numeric(IDHM_2010_M),
+    IDHM_CA_F = as.numeric(IDHM_2010_F)
+  ) %>%
+  select(ANO, NIVEL, CODMUNRES, IDHM_A, IDHM_CA, IDHM_CA_M, IDHM_CA_F) %>%
+  filter(!is.na(CODMUNRES))
+
+# 4. Tratando os dados dos Municípios com a DICA 2 da professora
+atlas_mun_clean <- atlas_mun %>%
+  select(município, IDHM_2010) %>% 
+  # Esta linha remove os últimos 5 caracteres (o " (XX)") para conseguir cruzar com o arquivo de códigos
+  mutate(município = substr(município, 1, nchar(município) - 5)) %>%
+  left_join(cod_mun, by = c("município" = "município")) %>%
+  mutate(
+    ANO = 2015,
+    NIVEL = "MUNICIPIO",
+    IDHM_A = NA_real_, 
+    IDHM_CA = as.numeric(IDHM_2010),
+    IDHM_CA_M = NA_real_,
+    IDHM_CA_F = NA_real_
+  ) %>%
+  select(ANO, NIVEL, CODMUNRES, IDHM_A, IDHM_CA, IDHM_CA_M, IDHM_CA_F) %>%
+  filter(!is.na(CODMUNRES))
+
+# 5. Unindo UF e Municípios no objeto ATLAS_MA
+ATLAS_MA <- bind_rows(atlas_uf_clean, atlas_mun_clean)
+
+# 6. Exportar o arquivo CSV
+write.csv(ATLAS_MA, "ATLAS_MA.csv", row.names = FALSE)
 
 #####################################################################################################
 # ETAPA 4: GERAR BANCO DE DADOS FINAL DO ESTADO, BASEADO NAS ANÁLISES DE SINASC, SIM, IBGE, SNIS,...
