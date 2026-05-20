@@ -706,6 +706,18 @@ write.csv(SIDRA_UF, "SIDRA_MA.csv", row.names = FALSE)
 # Exporte o arquivo em formato CSV
 # Faça o commit com a mensagem "Script e dados TAREFA 3 - SINISA"
 
+library(dplyr)
+sinisa_raw <- read.csv("agua e esgoto - município - 2015.csv", sep = ";", stringsAsFactors = FALSE)
+SINISA_MA <- sinisa_raw %>%
+  mutate(
+    ANO = 2015,
+    NIVEL = "MUNICIPIO",
+    # O gsub aqui já aplica a DICA 1 da professora sem precisar usar o Excel!
+    POPR_RA = as.numeric(gsub("\\.", "", POPR_RA)),
+    POPR_RE = as.numeric(gsub("\\.", "", POPR_RE))
+  ) %>%
+  select(ANO, NIVEL, CODMUNRES, POPR_RA, POPR_RE)
+write.csv(SINISA_MA, "SINISA_MA.csv", row.names = FALSE)
 
 # Tarefa 3: Acesso aos bancos de dados do ATLAS  e obtenção da informação
 # Escreva os comandos da Tarefa 3 estando na branch OUTROS
