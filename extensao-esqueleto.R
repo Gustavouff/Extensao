@@ -797,6 +797,23 @@ write.csv(ATLAS_MA, "ATLAS_MA.csv", row.names = FALSE)
 
 # Após o merge dos bancos, fazer commit “Script e dados agregados da UF”
 
+library(dplyr)
+
+sidra_ma  <- read.csv("SIDRA_MA.csv", stringsAsFactors = FALSE)
+atlas_ma  <- read.csv("ATLAS_MA.csv", stringsAsFactors = FALSE) %>% select(-ANO, -NIVEL)
+sinasc_ma <- read.csv("SINASC_MA.csv", stringsAsFactors = FALSE) %>% select(-ANO, -NIVEL)
+sim_ma    <- read.csv("SIM_MA.csv", stringsAsFactors = FALSE) %>% select(-ANO, -NIVEL)
+sinisa_ma <- read.csv("SINISA_MA.csv", stringsAsFactors = FALSE) %>% select(-ANO, -NIVEL)
+
+DA_MA <- sidra_ma %>%
+  full_join(atlas_ma, by = "CODMUNRES") %>%
+  full_join(sinasc_ma, by = "CODMUNRES") %>%
+  full_join(sim_ma, by = "CODMUNRES") %>%
+  full_join(sinisa_ma, by = "CODMUNRES") %>%
+  select(ANO, NIVEL, CODMUNRES, everything())
+
+write.csv(DA_MA, "DA_MA.csv", row.names = FALSE)
+
 
 # Tarefa 2: Acrescentar no banco DA_UF os indicadores TFG, TMG, RMM, TMM, TMM_P, TMN, TMN_P, TMN_T e TMI e chamar o banco de BDEM_UF_2015
 
@@ -804,6 +821,33 @@ write.csv(ATLAS_MA, "ATLAS_MA.csv", row.names = FALSE)
 
 # Exporte o arquivo em formato CSV
 # Faça o commit com a mensagem "Script e dados BDEM"
+
+BDEM_MA_2015 <- DA_MA %>%
+  mutate(
+    TN = as.numeric(TN),
+    POPRC_F_15_49 = as.numeric(POPRC_F_15_49),
+    TO = as.numeric(TO),
+    POPRE_T = as.numeric(POPRE_T),
+    TO_MT = as.numeric(TO_MT),
+    TO_MT_P = as.numeric(TO_MT_P),
+    TO_NT = as.numeric(TO_NT),
+    TO_PNT = as.numeric(TO_PNT),
+    TO_NT_P = as.numeric(TO_NT_P),
+    TO_NT_T = as.numeric(TO_NT_T)
+  ) %>%
+  mutate(
+    TFG = (TN / POPRC_F_15_49) * 1000,
+    TMG = (TO / POPRE_T) * 1000,
+    RMM = (TO_MT / TN) * 100000,
+    TMM = (TO_MT / POPRC_F_15_49) * 100000,
+    TMM_P = (TO_MT_P / POPRC_F_15_49) * 100000,
+    TMI = ((TO_NT + TO_PNT) / TN) * 1000,
+    TMN = (TO_NT / TN) * 1000,
+    TMN_P = (TO_NT_P / TN) * 1000,
+    TMN_T = (TO_NT_T / TN) * 1000
+  )
+
+write.csv(BDEM_MA_2015, "BDEM_MA_2015.csv", row.names = FALSE)
 
 
 ############################################################################################
